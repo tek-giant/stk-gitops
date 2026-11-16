@@ -1,0 +1,29 @@
+# The lobby sign. The AWS Load Balancer Controller reads this and builds a public ALB:
+# HTTPS on 443 with the ACM certificate, HTTP on 80 redirected to HTTPS,
+# and all traffic sent to the web pods. The API stays private behind NGINX, as on ECS.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:eu-west-2:743978812281:certificate/56b9a04d-fa64-4529-80a4-b1cf6972558f
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+    alb.ingress.kubernetes.io/healthcheck-path: /healthz
+    alb.ingress.kubernetes.io/load-balancer-name: stk-dev-eks-web
+spec:
+  ingressClassName: alb
+  rules:
+    - host: eks.tek-giant.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web
+                port:
+                  name: http

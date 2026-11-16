@@ -9,6 +9,7 @@ resources:
   - db-secret.yaml
   - stock-api.yaml
   - web.yaml
+  - ingress.yaml
 
 # The one place the image versions are set. Jenkins changes newTag in Phase 6.
 images:
