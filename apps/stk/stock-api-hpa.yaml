@@ -1,0 +1,20 @@
+# Autoscaling for the API: keep average CPU around 70% of what each pod asked for (250m).
+# Busier than that → add pods (up to 4). Quiet for 5 minutes → remove pods (down to 2).
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: stock-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: stock-api
+  minReplicas: 2
+  maxReplicas: 4
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
