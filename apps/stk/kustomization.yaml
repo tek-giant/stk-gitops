@@ -8,9 +8,13 @@ resources:
   - secret-store.yaml
   - db-secret.yaml
   - stock-api.yaml
+  - web.yaml
 
-# The one place the image version is set. Jenkins changes newTag in Phase 6.
+# The one place the image versions are set. Jenkins changes newTag in Phase 6.
 images:
   - name: stock-api
     newName: 743978812281.dkr.ecr.eu-west-2.amazonaws.com/stk/stock-api
     newTag: 156a6fb-2
+  - name: web
+    newName: 743978812281.dkr.ecr.eu-west-2.amazonaws.com/stk/web
+    newTag: a3daa40-2
