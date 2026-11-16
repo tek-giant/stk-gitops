@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stock-api
+  labels:
+    app: stock-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: stock-api
+  # Same safety as ECS: start a new pod before stopping an old one
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: stock-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+      containers:
+        - name: stock-api
+          image: stock-api   # kustomization.yaml swaps in the ECR address and tag
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: DB_URL
+              value: jdbc:postgresql://stk-dev-db.clmsq24e6co3.eu-west-2.rds.amazonaws.com:5432/stock?sslmode=require
+            - name: DB_USER
+              value: stk_admin
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: stk-db
+                  key: DB_PASSWORD
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          # Wait up to 2 minutes for Java to start before the other checks begin
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 5
+            failureThreshold: 24
+          # Restart the pod if it hangs
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          # Only send traffic once it can reach the database
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stock-api
+spec:
+  selector:
+    app: stock-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

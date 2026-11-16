@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: stk
+
+resources:
+  - namespace.yaml
+  - secret-store.yaml
+  - db-secret.yaml
+  - stock-api.yaml
+
+# The one place the image version is set. Jenkins changes newTag in Phase 6.
+images:
+  - name: stock-api
+    newName: 743978812281.dkr.ecr.eu-west-2.amazonaws.com/stk/stock-api
+    newTag: 156a6fb-2
