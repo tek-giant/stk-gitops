@@ -1,0 +1,25 @@
+# Tells ArgoCD to keep the cluster matching apps/stk in this repo.
+# Applied once by hand (kubectl apply -f argocd/stk.yaml); after that, Git is in charge.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: stk
+  namespace: argocd
+  # Deleting this Application also deletes everything it created (including the ALB)
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/tek-giant/stk-gitops.git
+    targetRevision: main
+    path: apps/stk
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: stk
+  syncPolicy:
+    automated:
+      prune: true     # something removed from Git → remove it from the cluster
+      selfHeal: true  # someone changes the cluster by hand → put it back the way Git says
+    syncOptions:
+      - CreateNamespace=true
